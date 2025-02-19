@@ -1,9 +1,15 @@
 const express = require('express');
-const axios = require('axios'); // For making HTTP requests
+const axios = require('axios');
+const path = require('path');
 const app = express();
 
 // Serve static files from the "public" directory
 app.use(express.static('public'));
+
+// Route to serve the main page
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
 
 // Route to fetch elevation data
 app.get('/get-elevation', async (req, res) => {
