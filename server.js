@@ -29,7 +29,7 @@ app.get('/get-elevation', async (req, res) => {
 });
 
 // Start the server
-const PORT = 4000;
-app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
+const port = process.env.PORT || 4000;  // Use PORT from environment variable or fallback to 4000
+app.listen(port, () => {
+  console.log(`Server running on port ${port}`);
 });
