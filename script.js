@@ -16,7 +16,7 @@ let temperatureChart, precipitationChart, forecastChart;
 // Function to get elevation from OpenTopoData API
 async function getElevation(latitude, longitude) {
   try {
-    const response = await fetch(`http://localhost:4000/get-elevation?latitude=${latitude}&longitude=${longitude}`);
+    const response = await fetch(`https://wynd.onrender.com/get-elevation?latitude=${latitude}&longitude=${longitude}`);
     const data = await response.json();
     
     if (data.elevation) {
