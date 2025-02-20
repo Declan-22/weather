@@ -55,37 +55,47 @@ async function getWeatherStations(latitude, longitude) {
 
 async function fetchWeather(city) {
   try {
-    loadingSpinner.classList.remove('hidden');
+      loadingSpinner.classList.remove('hidden');
 
-    let locationResponse = await fetch(`https://ipinfo.io/json?token=${IPINFO_API_KEY}`);
-    let locationData = await locationResponse.json();
-    if (!city) {
-      city = locationData.city;
-    }
+      let locationResponse = await fetch(`https://ipinfo.io/json?token=${IPINFO_API_KEY}`);
+      let locationData = await locationResponse.json();
+      if (!city) {
+          city = locationData.city;
+      }
 
-    const currentWeatherData = await fetchWeatherAPI(city);
-    const { latitude, longitude } = await fetchCityCoordinates(city); // Fetch city coordinates
+      const currentWeatherData = await fetchWeatherAPI(city);
+      const { latitude, longitude } = await fetchCityCoordinates(city);
 
-    const elevation = await getElevation(latitude, longitude); // Get elevation
-    console.log('Elevation:', elevation);
+      const elevation = await getElevation(latitude, longitude);
+      console.log('Elevation:', elevation);
 
-    const forecastWeatherData = await fetchNASAWeatherData(latitude, longitude);
+      const forecastWeatherData = await fetchNASAWeatherData(latitude, longitude);
 
-    const stations = await getWeatherStations(latitude, longitude); // Get nearby weather stations
-    console.log('Nearby stations:', stations);
+      let interpolatedData;
 
-    if (stations.length > 0) {
-      // Use the closest station for interpolation
-      const nearestStation = stations[0];
-      console.log('Using nearest station:', nearestStation);
+      try {
+          const stations = await getWeatherStations(latitude, longitude);
+          console.log('Nearby stations:', stations);
 
-      // Pass city coordinates to interpolateWeatherData
-      const interpolatedData = interpolateWeatherData(currentWeatherData, forecastWeatherData, elevation, nearestStation, latitude, longitude);
+          if (stations.length > 0) {
+              const nearestStation = stations[0];
+              console.log('Using nearest station:', nearestStation);
 
-      console.log('Interpolated weather data:', interpolatedData); // Log the interpolated data
+              interpolatedData = interpolateWeatherData(currentWeatherData, forecastWeatherData, elevation, nearestStation, latitude, longitude);
+          } else {
+              console.warn('No nearby weather stations found. Using default interpolation.');
+              interpolatedData = interpolateWeatherData(currentWeatherData, forecastWeatherData, elevation, null, latitude, longitude);
+          }
+      } catch (error) {
+          console.warn('Error fetching weather stations:', error);
+          console.warn('Proceeding without station data.');
+          interpolatedData = interpolateWeatherData(currentWeatherData, forecastWeatherData, elevation, null, latitude, longitude);
+      }
+
+      console.log('Interpolated weather data:', interpolatedData);
 
       cityName.textContent = city;
-      temperature.textContent = `Temperature: ${interpolatedData.currentTemp}°F`; // Already rounded to 2 decimal places
+      temperature.textContent = `Temperature: ${interpolatedData.currentTemp}°F`;
       weatherCondition.textContent = `Condition: ${interpolatedData.condition}`;
       uvIndex.textContent = `UV Index: ${interpolatedData.uvIndex}`;
       weatherAlerts.textContent = interpolatedData.alerts.length ? interpolatedData.alerts[0].headline : 'No severe weather alerts.';
@@ -93,18 +103,15 @@ async function fetchWeather(city) {
       displayTemperatureGraph(interpolatedData);
       displayForecastGraph(interpolatedData);
       displayPrecipitationGraph(forecastWeatherData);
-    } else {
-      console.error('No nearby weather stations found.');
-    }
   } catch (error) {
-    console.error('Error fetching weather data:', error);
-    cityName.textContent = 'Error';
-    temperature.textContent = '';
-    weatherCondition.textContent = '';
-    uvIndex.textContent = '';
-    weatherAlerts.textContent = error.message || 'Failed to fetch weather data.';
+      console.error('Error fetching weather data:', error);
+      cityName.textContent = 'Error';
+      temperature.textContent = '';
+      weatherCondition.textContent = '';
+      uvIndex.textContent = '';
+      weatherAlerts.textContent = error.message || 'Failed to fetch weather data.';
   } finally {
-    loadingSpinner.classList.add('hidden');
+      loadingSpinner.classList.add('hidden');
   }
 }
 
@@ -167,25 +174,31 @@ function adjustTemperatureForElevation(temp, elevation) {
 // Interpolate data between WeatherAPI and NASA POWER, adjusted by station coordinates
 function interpolateWeatherData(currentData, forecastData, elevation, station, cityLat, cityLon) {
   console.log("City Coordinates:", cityLat, cityLon); // Log city coordinates
-  console.log("Station Coordinates:", station.lat, station.lon); // Log station coordinates
 
   const baseTemperature = currentData.temp_f;
+  let adjustedBaseTemperature;
 
-  // Adjust temperature based on station distance
-  const adjustedBaseTemperature = adjustTemperatureBasedOnDistance(cityLat, cityLon, station.lat, station.lon, baseTemperature);
+  if (station) {
+      console.log("Station Coordinates:", station.lat, station.lon); // Log station coordinates
+      // Adjust temperature based on station distance
+      adjustedBaseTemperature = adjustTemperatureBasedOnDistance(cityLat, cityLon, station.lat, station.lon, baseTemperature);
+  } else {
+      console.warn("No station data available. Using base temperature without distance adjustment.");
+      adjustedBaseTemperature = baseTemperature;
+  }
 
   // Interpolate between forecast data and adjusted temperature
   const interpolatedTemps = forecastData.map(temp => {
-    const adjustedTemp = adjustTemperatureForElevation(temp * 1.8 + 32, elevation); // Convert °C to °F and adjust for elevation
-    return ((adjustedBaseTemperature + adjustedTemp) / 2).toFixed(2); // Round to 2 decimal places
+      const adjustedTemp = adjustTemperatureForElevation(temp * 1.8 + 32, elevation); // Convert °C to °F and adjust for elevation
+      return ((adjustedBaseTemperature + adjustedTemp) / 2).toFixed(2); // Round to 2 decimal places
   });
 
   return {
-    currentTemp: adjustedBaseTemperature.toFixed(2), // Round to 2 decimal places
-    condition: currentData.condition.text,
-    uvIndex: currentData.uv,
-    alerts: [],
-    interpolatedTemps: interpolatedTemps,
+      currentTemp: adjustedBaseTemperature.toFixed(2), // Round to 2 decimal places
+      condition: currentData.condition.text,
+      uvIndex: currentData.uv,
+      alerts: [],
+      interpolatedTemps: interpolatedTemps,
   };
 }
 
