@@ -1,7 +1,10 @@
 const express = require('express');
 const path = require('path');
+const cors = require('cors');
 const app = express();
 
+
+app.use(cors());
 // Serve static files from the root directory (no 'public' folder now)
 app.use(express.static(path.join(__dirname)));  // Now we serve from the root
 
