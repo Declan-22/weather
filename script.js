@@ -311,10 +311,16 @@ function displayForecastGraph(interpolatedData) {
 // Display precipitation graph for 3-7 days
 function displayPrecipitationGraph(forecastData) {
   const ctx = document.getElementById('precipitationChart').getContext('2d');
-  const forecastPrecip = forecastData.slice(2, 7).map((day, index) => ({
-      time: new Date(Date.now() + (index + 2) * 86400000).toLocaleDateString(),
-      precip: day.day.totalprecip_in,
-  }));
+  
+  // Ensure forecastData is an array and has the expected structure
+  const forecastPrecip = forecastData.slice(2, 7).map((day, index) => {
+      // Check if day and day.day.totalprecip_in are defined
+      const precip = day?.day?.totalprecip_in ?? 0; // Default to 0 if undefined
+      return {
+          time: new Date(Date.now() + (index + 2) * 86400000).toLocaleDateString(),
+          precip: precip,
+      };
+  });
 
   if (precipitationChart) {
       precipitationChart.destroy();
