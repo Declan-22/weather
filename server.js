@@ -19,16 +19,23 @@ app.get('/get-elevation', async (req, res) => {
   }
 
   try {
+    console.log(`Fetching elevation for lat: ${latitude}, lon: ${longitude}`);
+
     // Fetch elevation data from OpenTopoData API
     const response = await axios.get(
       `https://api.opentopodata.org/v1/test-dataset?locations=${latitude},${longitude}`
     );
 
-    // Extract elevation from the response
-    const elevation = response.data.results[0].elevation;
-    res.json({ elevation });
+    if (response.data.results && response.data.results.length > 0) {
+      const elevation = response.data.results[0].elevation;
+      console.log('Elevation:', elevation);
+      return res.json({ elevation });
+    } else {
+      console.error('Invalid API response:', response.data);
+      return res.status(500).json({ error: 'Failed to fetch valid elevation data' });
+    }
   } catch (error) {
-    console.error('Error fetching elevation data:', error);
+    console.error('Error fetching elevation data:', error.message);
     res.status(500).json({ error: 'Failed to fetch elevation data' });
   }
 });
