@@ -8,10 +8,13 @@ const publicPath = path.join(__dirname, 'public');
 app.use(express.static(publicPath));
 
 // Route to serve the main page
-app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "index.html"), (err) => {
+app.get('/', (req, res) => {
+  const filePath = path.join(__dirname, 'public', 'index.html');
+  console.log("Attempting to serve:", filePath);
+  
+  res.sendFile(filePath, (err) => {
     if (err) {
-      console.error('Error loading index.html:', err);
+      console.error("Error loading index.html:", err);
       res.status(500).send('Error loading the index.html file');
     }
   });
