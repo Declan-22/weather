@@ -1,18 +1,13 @@
 const express = require('express');
-const axios = require('axios');
 const path = require('path');
 const app = express();
 
-// Serve static files (including CSS) from the "public" directory
-app.use(express.static('public'));
+// Serve static files from the root directory (no 'public' folder now)
+app.use(express.static(path.join(__dirname)));  // Now we serve from the root
 
-// Route to serve the main page (index.html from root directory)
+// Serve index.html at root route
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'), (err) => {
-    if (err) {
-      res.status(500).send('Error loading the index.html file');
-    }
-  });
+  res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 // Route to fetch elevation data
