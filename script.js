@@ -1,3 +1,157 @@
+/*=============== SHOW SIDEBAR ===============*/
+const showSidebar = (toggleId, sidebarId, headerId, mainId, weatherInfoId, weatherCardsId) => {
+  const toggle = document.getElementById(toggleId),
+        sidebar = document.getElementById(sidebarId),
+        header = document.getElementById(headerId),
+        main = document.getElementById(mainId),
+        weatherInfo = document.getElementById(weatherInfoId),
+        weatherCards = document.getElementById(weatherCardsId);
+
+  if (toggle && sidebar && header && main && weatherInfo && weatherCards) {
+    toggle.addEventListener('click', () => {
+      sidebar.classList.toggle('show-sidebar');
+      if (window.innerWidth > 1150) {
+        header.classList.toggle('left-pd');
+        main.classList.toggle('left-pd');
+        weatherInfo.classList.toggle('left-pd');
+        weatherCards.classList.toggle('left-pd');
+      }
+    });
+  }
+};
+
+/*=============== AUTHENTICATION ===============*/
+const CLIENT_ID = '32805499266-aode8pdvh1t1mqt430d9uiutt8lo0t31.apps.googleusercontent.com';
+const REDIRECT_URI = 'http://localhost:4000';
+const SCOPE = 'https://www.googleapis.com/auth/userinfo.profile+https://www.googleapis.com/auth/userinfo.email';
+
+function updateSidebar() {
+  const sidebarUser = document.getElementById('sidebar-user');
+  const sidebarActions = document.getElementById('sidebar-actions');
+  const token = localStorage.getItem('access_token');
+
+  if (token) {
+    // Logged in state
+    fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+      .then(response => response.json())
+      .then(data => {
+        sidebarUser.innerHTML = `
+          <div class="sidebar-img">
+            <img src="${data.picture}" alt="Profile">
+          </div>
+          <div class="sidebar-info">
+            <h3>${data.name}</h3>
+            <span>${data.email}</span>
+          </div>
+        `;
+        sidebarActions.innerHTML = `
+          <button>
+            <i class="ri-moon-clear-fill sidebar-link sidebar-theme" id="theme-button">
+              <span>Theme</span>
+            </i>
+          </button>
+          <button id="logout-btn" class="sidebar-link">
+            <i class="ri-logout-box-r-line"></i>
+            <span>Log Out</span>
+          </button>
+        `;
+        // Reattach event listeners
+        document.getElementById('logout-btn').addEventListener('click', logout);
+        document.getElementById('theme-button').addEventListener('click', toggleTheme);
+      })
+      .catch(() => {
+        localStorage.removeItem('access_token');
+        updateSidebar(); // Reset to logged out on error
+      });
+  } else {
+    // Logged out state
+    sidebarUser.innerHTML = `
+      <button id="login-btn" class="sidebar-link">
+        <i class="ri-login-box-line"></i>
+        <span>Sign In</span>
+      </button>
+    `;
+    sidebarActions.innerHTML = `
+      <button>
+        <i class="ri-moon-clear-fill sidebar-link sidebar-theme" id="theme-button">
+          <span>Theme</span>
+        </i>
+      </button>
+    `;
+    // Reattach event listeners
+    document.getElementById('login-btn').addEventListener('click', showLoginPopup);
+    document.getElementById('theme-button').addEventListener('click', toggleTheme);
+  }
+}
+
+function showLoginPopup() {
+  document.getElementById('login-modal').classList.remove('hidden');
+}
+
+function hideLoginPopup() {
+  document.getElementById('login-modal').classList.add('hidden');
+}
+
+function login() {
+  console.log('Redirect URI:', REDIRECT_URI);
+  const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&response_type=token&scope=${SCOPE}`;
+  console.log('OAuth URL:', authUrl);
+  window.location.href = authUrl;
+}
+
+function logout() {
+  localStorage.removeItem('access_token');
+  updateSidebar();
+}
+
+function handleOAuthCallback() {
+  const hash = window.location.hash;
+  console.log('Hash received:', hash);
+  if (hash) {
+    const params = new URLSearchParams(hash.substring(1));
+    const token = params.get('access_token');
+    console.log('Token:', token);
+    if (token) {
+      localStorage.setItem('access_token', token);
+      window.location.hash = '';
+      updateSidebar();
+    }
+  }
+}
+
+function toggleTheme() {
+  document.body.classList.toggle('dark-theme');
+  const themeButton = document.getElementById('theme-button');
+  themeButton.classList.toggle('ri-sun-fill');
+  localStorage.setItem('selected-theme', getCurrentTheme());
+  localStorage.setItem('selected-icon', getCurrentIcon());
+}
+
+const getCurrentTheme = () => document.body.classList.contains('dark-theme') ? 'dark' : 'light';
+const getCurrentIcon = () => document.getElementById('theme-button').classList.contains('ri-sun-fill') ? 'ri-moon-clear-fill' : 'ri-sun-fill';
+
+/*=============== INITIALIZATION ===============*/
+document.addEventListener('DOMContentLoaded', () => {
+  // Initialize sidebar toggle
+  showSidebar('header-toggle', 'sidebar', 'header', 'main', 'weatherinfo', 'weatherCards');
+  
+  // Update sidebar based on auth state
+  updateSidebar();
+  handleOAuthCallback();
+
+  // Attach popup event listeners
+  document.getElementById('google-login-btn').addEventListener('click', login);
+  document.getElementById('close-modal').addEventListener('click', hideLoginPopup);
+});
+
+
+
+
+
+
+
 const IPINFO_API_KEY = 'c559f66759d881';
 const WEATHER_API_KEY = 'f2ad7e9739454afa911223159251402';
 
@@ -119,7 +273,7 @@ async function fetchWeather(city) {
 async function fetchWeatherAPI(city) {
   const response = await fetch(`https://api.weatherapi.com/v1/current.json?key=${WEATHER_API_KEY}&q=${city}&aqi=no`);
   const data = await response.json();
-  console.log('Current weather data:', data.current); // Log current weather data
+  console.log('Full API response:', data); // Log entire response for debugging
   return data.current;
 }
 
@@ -329,6 +483,7 @@ function displayPrecipitationGraph(forecastData) {
   const forecastPrecip = forecastData.slice(2, 7).map((day, index) => {
       // Check if day and day.day.totalprecip_in are defined
       const precip = day?.day?.totalprecip_in ?? 0; // Default to 0 if undefined
+      console.log(`Day ${index + 2}: Precipitation = ${precip}`); // Log precipitation data
       return {
           time: new Date(Date.now() + (index + 2) * 86400000).toLocaleDateString(),
           precip: precip,

@@ -12,88 +12,161 @@
   <link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
 </head>
 <body>
-  <div class="sidebar">
-    <a href="login.html"><i class="ri-user-line"></i></a>
-    <a href="index.html"><i class="ri-dashboard-line"></i></a>
-    <a href="#radar-map"><i class="ri-radar-line"></i></a>
-    <a href="alerts.html"><i class="ri-alert-line"></i></a>
-  </div>
   
-  <nav class="navbar">
-    <div class="logo">
-      <a href="index.html">Weatherly</a>
+  <header class="header" id="header">
+    <div class="header-container">
+      <a href="#" class="header-logo">
+        <i class="ri-windy-line"></i>
+        <span>Wynd</span>
+      </a>
+      <div class="search">
+        <input type="text" id="city-input" placeholder="Enter city name">
+        <button id="search-btn">Search</button>
+      </div>
+
+      <button class="header-toggle" id="header-toggle">
+        <i class="ri-menu-line"></i>
+      </button>
     </div>
-    <ul class="nav-links">
-      <li><a href="index.html"><i class="ri-dashboard-line"></i> Dashboard</a></li>
-      <li><a href="radar-map.html"><i class="ri-radar-line"></i> Radar</a></li>
-      <li><a href="alerts.html"><i class="ri-alert-line"></i> Alerts</a></li>
-      <li><a id="login-btn" href="login.html"><i class="ri-user-line"></i> Login</a></li>
-    </ul>
+  </header>
+
+  <!-- Sidebar -->
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-container">
+      <div class="sidebar-user" id="sidebar-user">
+        <!-- Dynamically updated via JS -->
+      </div>
+
+      <div class="sidebar-content">
+        <div>
+          <h3 class="sidebar-title">Manage</h3>
+          <div class="sidebar-list">
+            <a href="index.html" class="sidebar-link active-link">
+              <i class="ri-dashboard-fill"></i>
+              <span>Dashboard</span>
+            </a>
+            <a href="#" class="sidebar-link">
+              <i class="ri-radar-fill"></i>
+              <span>Radar</span>
+            </a>
+            <a href="#" class="sidebar-link">
+              <i class="ri-alert-fill"></i>
+              <span>Alerts</span>
+            </a>
+          </div>
+
+          <h3 class="sidebar-title">Settings</h3>
+          <div class="sidebar-list">
+            <a href="#" class="sidebar-link">
+              <i class="ri-settings-3-fill"></i>
+              <span>Settings</span>
+            </a>
+            <a href="#" class="sidebar-link">
+              <i class="ri-mail-unread-fill"></i>
+              <span>Inbox</span>
+            </a>
+            <a href="#" class="sidebar-link">
+              <i class="ri-notification-3-fill"></i>
+              <span>Notifications</span>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <div class="sidebar-actions" id="sidebar-actions">
+        <button>
+          <i class="ri-moon-clear-fill sidebar-link sidebar-theme" id="theme-button">
+            <span>Theme</span>
+          </i>
+        </button>
+        <!-- Logout/Login button dynamically added here -->
+      </div>
+    </div>
   </nav>
 
-  <div class="container">
-    <h1 id="h1-container">Weather Dashboard</h1>
-    <div class="search">
-      <input type="text" id="city-input" placeholder="Enter city name">
-      <button id="search-btn">Search</button>
+  <!-- Login Popup -->
+  <div id="login-modal" class="modal hidden">
+    <div class="modal-content">
+      <span id="close-modal" class="close">&times;</span>
+      <h2>Sign In</h2>
+      <button id="google-login-btn" class="login-btn">
+        <i class="ri-google-fill"></i> Sign in with Google
+      </button>
     </div>
-    <div id="loading-spinner" class="hidden">
-      <div class="spinner"></div>
+  </div>
+  </nav>
+
+  <!--main-->
+  
+<main class="main container" id="main">
+
+</main>
+
+<!--data-->
+
+<div class="container-weather">
+
+  </div>
+  <div id="loading-spinner" class="hidden">
+    <div class="spinner"></div>
+  </div>
+  <div id="loading-message" class="hidden">Loading weather data...</div>
+  <div class="weather-info" id="weatherinfo">
+    <h2 id="city-name">City Name</h2>
+    <p id="temperature">Temperature: --°F</p>
+    <p id="weather-condition">Condition: --</p>
+    <p id="uv-index">UV Index: --</p>
+    <p id="weather-alerts">Alerts: No severe weather alerts.</p>
+  </div>
+</div>
+<div class="weather-cards" id="weatherCards">
+  <!-- Temperature Card -->
+  <div class="card">
+    <div class="card-header" onclick="toggleCard('temperature-card')">
+      <h5 class="temperature"><i class="ri-temp-hot-line"></i>Temperature</h5>
+      
+
+      <span class="toggle-icon"><i class="ri-arrow-drop-down-line"></i></span>
     </div>
-    <div id="loading-message" class="hidden">Loading weather data...</div>
-    <div id="weather-info">
-      <h2 id="city-name">City Name</h2>
-      <p id="temperature">Temperature: --°F</p>
-      <p id="weather-condition">Condition: --</p>
-      <p id="uv-index">UV Index: --</p>
-      <p id="weather-alerts">Alerts: No severe weather alerts.</p>
+    <div class="card-content" id="temperature-card">
+      <div class="chart-container">
+        <canvas id="temperatureChart" width="922" height="500"></canvas>
+      </div>
     </div>
   </div>
 
- 
+  <!-- Precipitation Card -->
+  <div class="card">
+    <div class="card-header" onclick="toggleCard('precipitation-card')">
+      <h5 class="precipitation"><i class="ri-rainy-fill"></i>Precipitation</h5>
 
-  <div class="weather-cards">
-    <!-- Temperature Card -->
-    <div class="card">
-      <div class="card-header" onclick="toggleCard('temperature-card')">
-        <h2>Temperature</h2>
-        <span class="toggle-icon"><i class="ri-arrow-drop-down-line"></i></span>
-      </div>
-      <div class="card-content" id="temperature-card">
-        <div class="chart-container">
-          <canvas id="temperatureChart" width="922" height="500"></canvas>
-        </div>
-      </div>
+
+      <span class="toggle-icon"><i class="ri-arrow-drop-down-line"></i></span>
     </div>
-  
-    <!-- Precipitation Card -->
-    <div class="card">
-      <div class="card-header" onclick="toggleCard('precipitation-card')">
-        <h2>Precipitation</h2>
-        <span class="toggle-icon"><i class="ri-arrow-drop-down-line"></i></span>
-      </div>
-      <div class="card-content" id="precipitation-card">
-        <p>Precipitation data will go here.</p>
-        <div class="chart-container">
-          <canvas id="precipitationChart" width="922" height="500"></canvas>
-        </div>
-      </div>
-    </div>
-  
-    <!-- Forecast Card -->
-    <div class="card">
-      <div class="card-header" onclick="toggleCard('forecast-card')">
-        <h2>Forecast</h2>
-        <span class="toggle-icon"><i class="ri-arrow-drop-down-line"></i></span>
-      </div>
-      <div class="card-content" id="forecast-card">
-        <p>5-day forecast will go here.</p>
-        <div class="chart-container">
-          <canvas id="forecastChart" width="922" height="500"></canvas>
-        </div>
+    <div class="card-content" id="precipitation-card">
+      <p>Precipitation data will go here.</p>
+      <div class="chart-container">
+        <canvas id="precipitationChart" width="922" height="500"></canvas>
       </div>
     </div>
   </div>
+
+  <!-- Forecast Card -->
+  <div class="card">
+    <div class="card-header" onclick="toggleCard('forecast-card')">
+      <h5 class="forecast"><i class="ri-calendar-2-line"></i>Forecast</h5>
+
+
+      <span class="toggle-icon"><i class="ri-arrow-drop-down-line"></i></span>
+    </div>
+    <div class="card-content" id="forecast-card">
+      <p>5-day forecast will go here.</p>
+      <div class="chart-container">
+        <canvas id="forecastChart" width="922" height="500"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
 
   <script src="/script.js"></script>
 </body>
