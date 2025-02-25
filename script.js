@@ -22,7 +22,7 @@ const showSidebar = (toggleId, sidebarId, headerId, mainId, weatherInfoId, weath
 
 /*=============== AUTHENTICATION ===============*/
 const CLIENT_ID = '32805499266-aode8pdvh1t1mqt430d9uiutt8lo0t31.apps.googleusercontent.com';
-const REDIRECT_URI = 'http://localhost:4000';
+const REDIRECT_URI = 'https://wynd.onrender.com';
 const SCOPE = 'https://www.googleapis.com/auth/userinfo.profile+https://www.googleapis.com/auth/userinfo.email';
 
 function updateSidebar() {
