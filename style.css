@@ -216,6 +216,7 @@ body.dark-theme {
   font-weight: var(--font-semi-bold);
   padding-left: 2rem;
   margin-bottom: 1.5rem;
+  margin-top: 2.5rem;
 }
 
 .sidebar-list, .sidebar-actions {
@@ -557,34 +558,54 @@ body.dark-theme {
   justify-content: center;
   align-items: center;
   z-index: 1000;
+
+  opacity: 0;
+  visibility: hidden;
+  transform: scale(0.95);
+  transition: opacity 0.3s ease-out, transform 0.3s ease-out, visibility 0.3s;
 }
 
-.modal.hidden {
-  display: none;
+.modal.show {
+  opacity: 1;
+  visibility: visible;
+  transform: scale(1);
 }
 
 .modal-content {
+  position: relative;
   background-color: var(--secondary-color);
   padding: 20px;
   border-radius: 10px;
   text-align: center;
   box-shadow: 0 2px 24px var(--shadow-color);
   width: 300px;
+  transition: transform 0.3s ease-out;
 }
 
-.close {
+
+#close-modal {
   position: absolute;
-  top: 10px;
-  right: 15px;
-  font-size: 24px;
-  cursor: pointer;
+  display: inline-block;
   color: var(--text-color);
+  font-size: 30px;
+  top: 10px;
+  right: 10px;
+  transition: all 0.3s ease; /* Smooth transition */
+  cursor: pointer; /* Indicates the element is clickable */
 }
 
-.login-btn {
-  background: linear-gradient(45deg, #4285f4, #34a853);
-  color: white;
-  padding: 10px 20px;
+#close-modal:hover {
+  transform: scale(1.20);
+
+}
+
+
+
+
+
+#login-btn {
+
+  padding: 0px 0px; /* Adjust padding as needed */
   border-radius: 20px;
   cursor: pointer;
   display: flex;
@@ -592,16 +613,32 @@ body.dark-theme {
   justify-content: center;
   gap: 10px;
   margin-top: 20px;
-  transition: transform 0.3s ease;
+  width: fit-content; /* Make the width fit the content */
+  max-width: 100%; /* Ensure it doesn't overflow the sidebar */
+  white-space: nowrap; /* Prevent text from wrapping */
 }
 
-.login-btn:hover {
-  transform: scale(1.05);
-}
-
-.login-btn i {
+#login-btn i {
   font-size: 20px;
 }
+
+#google-login-btn{
+  color: white;
+  background: linear-gradient(45deg, #09497c, #3f75a0);
+  border-radius: 20px;
+  padding: 5px;
+  margin-top: 8px;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  transition: all .3s;
+}
+
+#google-login-btn:hover{
+  transform:scale(1.05);
+}
+
+
 
 
 
