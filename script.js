@@ -709,7 +709,7 @@ async function fetchWeather(input) {
     displayForecastGraph(interpolatedData);
   } catch (error) {
     console.error('Error fetching weather data:', error);
-    cityName.textContent = 'Error - Using adblockers (Switch to an incognito Window)'
+    cityName.textContent = 'Error - Using adblockers (Switch to an incognito window)'
     temperature.textContent = '';
     weatherCondition.textContent = '';
     uvIndex.textContent = '';
