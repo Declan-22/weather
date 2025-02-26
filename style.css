@@ -316,7 +316,7 @@ body.dark-theme {
   }
 
   .header {
-
+    max-width: 300px;
     width: auto;
   }
 
