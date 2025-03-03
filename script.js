@@ -442,8 +442,8 @@ function adjustTemperatureBasedOnDistance(cityLat, cityLon, stationLat, stationL
 // Display temperature graph using interpolated temperature data for 7 days
 function displayTemperatureGraph(interpolatedData) {
   const ctx = document.getElementById('temperatureChart').getContext('2d');
-  const forecastTemps = interpolatedData.interpolatedTemps.slice(0, 7).map((temp, index) => ({
-      time: new Date(Date.now() + index * 86400000).toLocaleDateString(),
+  const forecastTemps = interpolatedData.interpolatedTemps.slice(0, 24).map((temp, index) => ({
+      time: new Date(Date.now() + index * 3600000).toLocaleTimeString(), // 24-hour format
       temp: parseFloat(temp) // Convert to float for graphing
   }));
 
@@ -452,36 +452,33 @@ function displayTemperatureGraph(interpolatedData) {
   }
 
   temperatureChart = new Chart(ctx, {
-      type: 'bar',
+      type: 'line', // Line chart for better visibility of hourly trends
       data: {
           labels: forecastTemps.map(item => item.time),
           datasets: [{
               label: 'Temperature (°F)',
               data: forecastTemps.map(item => item.temp),
-              backgroundColor: forecastTemps.map(item => {
-                  const temp = item.temp;
-                  return temp <= 32 ? 'blue' : temp >= 90 ? 'red' : 'purple';
-              }),
-              borderColor: 'rgba(0, 0, 0, 0.2)',
-              borderWidth: 1,
-              borderRadius: 5,
+              borderColor: 'blue',
+              fill: false,
+              borderWidth: 2,
           }],
       },
       options: {
           responsive: true,
           maintainAspectRatio: false,
           scales: {
-              x: { title: { display: true, text: 'Date' } },
+              x: { title: { display: true, text: 'Time' } },
               y: { title: { display: true, text: 'Temperature (°F)' } }
           }
       }
   });
 }
 
+
 // Display forecast graph using interpolated temperature data for a month
 function displayForecastGraph(interpolatedData) {
   const ctx = document.getElementById('forecastChart').getContext('2d');
-  const forecastTemps = interpolatedData.interpolatedTemps.slice(0, 30).map((temp, index) => ({
+  const forecastTemps = interpolatedData.interpolatedTemps.slice(0, 14).map((temp, index) => ({
       time: new Date(Date.now() + index * 86400000).toLocaleDateString(),
       temp: parseFloat(temp) // Convert to float for graphing
   }));
@@ -495,7 +492,7 @@ function displayForecastGraph(interpolatedData) {
       data: {
           labels: forecastTemps.map(item => item.time),
           datasets: [{
-              label: 'Forecast Temperature (°F)',
+              label: '14-Day Forecast Temperature (°F)',
               data: forecastTemps.map(item => item.temp),
               borderColor: 'green',
               borderWidth: 2,
@@ -517,11 +514,13 @@ function displayForecastGraph(interpolatedData) {
 function displayPrecipitationGraph(forecastData) {
   const ctx = document.getElementById('precipitationChart').getContext('2d');
   
-  // Ensure forecastData is an array and has the expected structure
+  if (!Array.isArray(forecastData) || forecastData.length === 0) {
+    console.error("No precipitation data available");
+    return;
+  }
+
   const forecastPrecip = forecastData.slice(2, 7).map((day, index) => {
-      // Check if day and day.day.totalprecip_in are defined
-      const precip = day?.day?.totalprecip_in ?? 0; // Default to 0 if undefined
-      console.log(`Day ${index + 2}: Precipitation = ${precip}`); // Log precipitation data
+      const precip = day?.day?.totalprecip_in ?? 0;
       return {
           time: new Date(Date.now() + (index + 2) * 86400000).toLocaleDateString(),
           precip: precip,
@@ -556,6 +555,202 @@ function displayPrecipitationGraph(forecastData) {
   });
 }
 
+
+// Display wind compass
+function displayWindCompass(weatherData) {
+  // Replace the wind card content
+  const windCardContent = document.getElementById('wind-card');
+  
+  // Get wind data
+  const windSpeed = weatherData.current.wind_mph;
+  const windDegree = weatherData.current.wind_degree;
+  const windDir = weatherData.current.wind_dir;
+  const feelsLike = weatherData.current.feelslike_f;
+  const temp = weatherData.current.temp_f;
+  const windChill = calculateWindChill(temp, windSpeed);
+  
+  // Create compass container
+  windCardContent.innerHTML = `
+    <div class="wind-container">
+      <div class="wind-data">
+        <div class="data-row">
+          <div class="data-item">
+            <h4>Wind Speed</h4>
+            <p>${windSpeed} mph</p>
+          </div>
+          <div class="data-item">
+            <h4>Direction</h4>
+            <p>${windDir} (${windDegree}°)</p>
+          </div>
+        </div>
+        <div class="data-row">
+          <div class="data-item">
+            <h4>Wind Chill</h4>
+            <p>${windChill}°F</p>
+          </div>
+          <div class="data-item">
+            <h4>Feels Like</h4>
+            <p>${feelsLike}°F</p>
+          </div>
+        </div>
+      </div>
+      
+      <div class="compass-container">
+        <div class="compass">
+          <div class="compass-cardinal">
+            <span class="north">N</span>
+            <span class="east">E</span>
+            <span class="south">S</span>
+            <span class="west">W</span>
+          </div>
+          <div class="arrow" style="transform: rotate(${windDegree}deg)"></div>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  // Add styles to the document
+  if (!document.getElementById('wind-styles')) {
+    const styleElement = document.createElement('style');
+    styleElement.id = 'wind-styles';
+    styleElement.textContent = `
+      .wind-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 100%;
+        padding: 1rem;
+      }
+      
+      .wind-data {
+        width: 100%;
+        margin-bottom: 1.5rem;
+      }
+      
+      .data-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+      }
+      
+      .data-item {
+        text-align: center;
+        flex: 1;
+      }
+      
+      .data-item h4 {
+        margin-bottom: 0.3rem;
+        font-size: 0.9rem;
+        color: #666;
+      }
+      
+      .data-item p {
+        font-size: 1.1rem;
+        font-weight: bold;
+        margin: 0;
+      }
+      
+      .compass-container {
+        position: relative;
+        width: 200px;
+        height: 200px;
+      }
+      
+      .compass {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        background: linear-gradient(to bottom, #f5f5f5, #e0e0e0);
+        border: 2px solid #ccc;
+        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      
+      .compass-cardinal {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        top: 0;
+        left: 0;
+      }
+      
+      .compass-cardinal span {
+        position: absolute;
+        font-weight: bold;
+        font-size: 1rem;
+      }
+      
+      .compass-cardinal .north {
+        top: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+      }
+      
+      .compass-cardinal .south {
+        bottom: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+      }
+      
+      .compass-cardinal .east {
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+      }
+      
+      .compass-cardinal .west {
+        left: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+      }
+      
+      .arrow {
+        position: relative;
+        width: 6px;
+        height: 80px;
+        background-color: #ff5722;
+        clip-path: polygon(50% 0, 100% 80%, 50% 100%, 0 80%);
+        transform-origin: center 70%;
+        transition: transform 1s ease-in-out;
+      }
+      
+      @media (max-width: 768px) {
+        .wind-container {
+          flex-direction: column;
+        }
+        
+        .compass-container {
+          width: 160px;
+          height: 160px;
+          margin-top: 1rem;
+        }
+        
+        .arrow {
+          height: 65px;
+        }
+      }
+    `;
+    document.head.appendChild(styleElement);
+  }
+}
+
+// Calculate wind chill formula
+function calculateWindChill(tempF, windMph) {
+  if (tempF > 50 || windMph < 3) {
+    // Wind chill formula is not applicable
+    return tempF.toFixed(1);
+  }
+  
+  // Wind chill formula from National Weather Service
+  const windChill = 35.74 + (0.6215 * tempF) - (35.75 * Math.pow(windMph, 0.16)) + (0.4275 * tempF * Math.pow(windMph, 0.16));
+  return Math.round(windChill * 10) / 10; // Round to 1 decimal place
+}
+
+
+
 function toggleCard(cardId) {
   const cardContent = document.getElementById(cardId);
   const icon = cardContent.previousElementSibling.querySelector('.toggle-icon');
@@ -563,7 +758,7 @@ function toggleCard(cardId) {
   cardContent.classList.toggle('open');
   icon.classList.toggle('flip');
   icon.innerHTML = cardContent.classList.contains('open') 
-    ? '<i class="ri-arrow-drop-up-line"></i>' 
+    ? '<i class="ri-arrow-drop-down-line"></i>' 
     : '<i class="ri-arrow-drop-down-line"></i>';
 }
 
@@ -578,6 +773,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
 // Add this function to your code
 // Function to fetch weather data
+
 async function fetchWeather(input) {
   try {
     loadingSpinner.classList.remove('hidden');
@@ -657,7 +853,7 @@ async function fetchWeather(input) {
     }
 
     // Fetch weather data using the coordinates
-    const weatherResponse = await fetch(`https://api.weatherapi.com/v1/current.json?key=${WEATHER_API_KEY}&q=${latitude},${longitude}&aqi=no`);
+    const weatherResponse = await fetch(`https://api.weatherapi.com/v1/forecast.json?key=${WEATHER_API_KEY}&q=${latitude},${longitude}&days=3&aqi=no&alerts=yes`);
     const weatherData = await weatherResponse.json();
 
     // Log the full API response
@@ -687,6 +883,17 @@ async function fetchWeather(input) {
       interpolatedData = interpolateWeatherData(weatherData.current, forecastWeatherData, elevation, null, latitude, longitude);
     }
 
+    // Get wind speed from current weather data
+    const windSpeed = weatherData.current.wind_mph;
+    console.log('Wind Speed:', windSpeed);
+
+    // Get alerts from weather data
+    const weatherAlertData = weatherData.alerts?.alert || [];
+    console.log('Weather Alerts:', weatherAlertData);
+
+    interpolatedData.windSpeed = windSpeed;
+    interpolatedData.alerts = weatherAlertData;
+
     console.log('Interpolated weather data:', interpolatedData);
 
     // Debugging: Log the adjusted temperature before updating the UI
@@ -702,21 +909,70 @@ async function fetchWeather(input) {
     // Display weather data
     temperature.textContent = `Temperature: ${interpolatedData.currentTemp}°F`;
     weatherCondition.textContent = `Condition: ${interpolatedData.condition}`;
+    document.getElementById('wind-speed').textContent = `Wind Speed: ${interpolatedData.windSpeed} mph`;
     uvIndex.textContent = `UV Index: ${interpolatedData.uvIndex}`;
-    weatherAlerts.textContent = interpolatedData.alerts.length ? interpolatedData.alerts[0].headline : 'No severe weather alerts.';
+    
+    // Process and display alerts
+    if (interpolatedData.alerts.length > 0) {
+      const alert = interpolatedData.alerts[0];
+      weatherAlerts.textContent = `Alert: ${alert.headline || alert.event || 'Weather alert active'}`;
+    } else {
+      weatherAlerts.textContent = 'No severe weather alerts.';
+    }
 
-    displayTemperatureGraph(interpolatedData);
-    displayForecastGraph(interpolatedData);
-  } catch (error) {
-    console.error('Error fetching weather data:', error);
-    cityName.textContent = 'Error - Using adblockers (Switch to an incognito window)'
-    temperature.textContent = '';
-    weatherCondition.textContent = '';
-    uvIndex.textContent = '';
-    weatherAlerts.textContent = error.message || 'Failed to fetch weather data.';
-  } finally {
-    loadingSpinner.classList.add('hidden');
+// Assuming you retrieve forecast data and wind direction correctly
+const forecastData = weatherData.forecast.forecastday; // Get forecast data
+const windDegrees = weatherData.current.wind_degree; // Get wind direction degrees
+
+// Then, call your display functions
+displayTemperatureGraph(interpolatedData);
+displayForecastGraph(interpolatedData);
+displayPrecipitationGraph(forecastData);
+displayWindCompass(weatherData); // Call displayWindCompass instead of wind chart
+
+} catch (error) {
+  console.error('Error fetching weather data:', error);
+  cityName.textContent = 'Error - Using adblockers (Switch to an incognito window)';
+  temperature.textContent = '';
+  weatherCondition.textContent = '';
+  document.getElementById('wind-speed').textContent = '';
+  uvIndex.textContent = '';
+  weatherAlerts.textContent = error.message || 'Failed to fetch weather data.';
+} finally {
+  loadingSpinner.classList.add('hidden');
+}
+}
+
+// Update the interpolateWeatherData function to include wind speed
+function interpolateWeatherData(currentData, forecastData, elevation, station, cityLat, cityLon) {
+  console.log("City Coordinates:", cityLat, cityLon); // Log city coordinates
+
+  const baseTemperature = currentData.temp_f;
+  let adjustedBaseTemperature;
+
+  if (station) {
+      console.log("Station Coordinates:", station.lat, station.lon); // Log station coordinates
+      // Adjust temperature based on station distance
+      adjustedBaseTemperature = adjustTemperatureBasedOnDistance(cityLat, cityLon, station.lat, station.lon, baseTemperature);
+  } else {
+      console.warn("No station data available. Using base temperature without distance adjustment.");
+      adjustedBaseTemperature = baseTemperature;
   }
+
+  // Interpolate between forecast data and adjusted temperature
+  const interpolatedTemps = forecastData.map(temp => {
+      const adjustedTemp = adjustTemperatureForElevation(temp * 1.8 + 32, elevation); // Convert °C to °F and adjust for elevation
+      return ((adjustedBaseTemperature + adjustedTemp) / 2).toFixed(2); // Round to 2 decimal places
+  });
+
+  return {
+      currentTemp: adjustedBaseTemperature.toFixed(2), // Round to 2 decimal places
+      condition: currentData.condition.text,
+      uvIndex: currentData.uv,
+      windSpeed: currentData.wind_mph, // Add wind speed
+      alerts: [], // This will be populated with actual alerts later
+      interpolatedTemps: interpolatedTemps,
+  };
 }
 
 // Helper function to check if a string is a US state

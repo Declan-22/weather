@@ -115,6 +115,7 @@
     <h2 id="city-name">City Name</h2>
     <p id="temperature">Temperature: --°F</p>
     <p id="weather-condition">Condition: --</p>
+    <p id="wind-speed">Wind Speed: --</p>
     <p id="uv-index">UV Index: --</p>
     <p id="weather-alerts">Alerts: No severe weather alerts.</p>
   </div>
@@ -160,12 +161,24 @@
       <span class="toggle-icon"><i class="ri-arrow-drop-down-line"></i></span>
     </div>
     <div class="card-content" id="forecast-card">
-      <p>5-day forecast will go here.</p>
       <div class="chart-container">
         <canvas id="forecastChart" width="922" height="500"></canvas>
       </div>
     </div>
   </div>
+
+    <!-- Wind Card -->
+    <div class="card">
+      <div class="card-header" onclick="toggleCard('wind-card')">
+        <h5 class="wind"><i class="ri-windy-line"></i>Wind</h5>
+  
+  
+        <span class="toggle-icon"><i class="ri-arrow-drop-down-line"></i></span>
+      </div>
+      <div class="card-content" id="wind-card">
+        <canvas id="wind-card" width="922" height="500"></canvas>
+      </div>
+    </div>
 </div>
 
   <script src="/script.js"></script>

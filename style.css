@@ -282,9 +282,32 @@ body.dark-theme {
 }
 
 @media screen and (max-width: 500px) {
-  .header-container {
-    padding-inline: 1rem;
+  .header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: var(--z-fixed);
+    margin: .75rem; /* Keep this, but it’ll be overridden in the media query */
   }
+  
+  
+  
+  
+  .header-container {
+    width: 50%;
+    height: var(--header-height);
+    background-color: var(--body-color);
+    box-shadow: 0 2px 24px var(--shadow-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-inline: 1.5em;
+    border-radius: 1rem;
+    transition: background-color .4s;
+  }
+  
+
 
   .sidebar {
     width: max-content;
@@ -315,10 +338,7 @@ body.dark-theme {
     margin-inline: auto;
   }
 
-  .header {
-    max-width: 300px;
-    width: auto;
-  }
+
 
 
 }
@@ -638,6 +658,53 @@ body.dark-theme {
   transform:scale(1.05);
 }
 
+/* Wind Compass Animation */
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+.compass:after {
+  content: '';
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  background-color: #1e88e5;
+  border-radius: 50%;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 10px rgba(30, 136, 229, 0.5);
+  animation: pulse 2s infinite;
+}
+
+/* Responsive adjustments for charts */
+@media (max-width: 768px) {
+  .chart-container {
+    height: 300px !important;
+  }
+}
+
+/* Card transitions */
+.card-content {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.5s ease-out;
+}
+
+.card-content.open {
+  max-height: 600px;
+  transition: max-height 0.5s ease-in;
+}
+
+.toggle-icon {
+  transition: transform 0.3s ease;
+}
+
+.toggle-icon.flip {
+  transform: rotate(180deg);
+}
 
 
 
