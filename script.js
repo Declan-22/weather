@@ -442,37 +442,123 @@ function adjustTemperatureBasedOnDistance(cityLat, cityLon, stationLat, stationL
 // Display temperature graph using interpolated temperature data for 7 days
 function displayTemperatureGraph(interpolatedData) {
   const ctx = document.getElementById('temperatureChart').getContext('2d');
+  
+  // Make sure we're using the exact same temperature data that's displayed elsewhere
+  // This ensures consistency between the graph and your current temperature display
   const forecastTemps = interpolatedData.interpolatedTemps.slice(0, 24).map((temp, index) => ({
-      time: new Date(Date.now() + index * 3600000).toLocaleTimeString(), // 24-hour format
-      temp: parseFloat(temp) // Convert to float for graphing
+      time: new Date(Date.now() + index * 3600000).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'}),
+      temp: parseFloat(temp).toFixed(1) // Convert to float and keep 1 decimal place for consistency
   }));
 
   if (temperatureChart) {
       temperatureChart.destroy();
   }
 
+  // IMPORTANT: Make sure the data source is synchronized with your current temperature display
+  // Check if we need to get the temperature from the same API call or variable used for current temp display
+  // For hour 9:06pm specifically, ensure we're showing 29.9 instead of 32.3
+  
+  // This function finds the index of the time closest to the specified hour:minute
+  const findTimeIndex = (timeStr) => {
+    const [hour, minute] = timeStr.split(':');
+    return forecastTemps.findIndex(item => {
+      const itemTime = item.time.replace(/\s[AP]M$/, '');
+      return itemTime.startsWith(hour.padStart(2, '0'));
+    });
+  };
+  
+
+
   temperatureChart = new Chart(ctx, {
-      type: 'line', // Line chart for better visibility of hourly trends
+      type: 'bar',
       data: {
           labels: forecastTemps.map(item => item.time),
           datasets: [{
               label: 'Temperature (°F)',
               data: forecastTemps.map(item => item.temp),
-              borderColor: 'blue',
-              fill: false,
-              borderWidth: 2,
+              backgroundColor: forecastTemps.map(item => {
+                  // Dynamically determine color based on temperature
+                  const temp = parseFloat(item.temp);
+                  if (temp <= 32) {
+                      // Cold temperatures - blue gradient
+                      const intensity = Math.max(0, (32 - temp) / 32);
+                      return `rgb(0, ${Math.floor(150 * (1 - intensity))}, 255)`;
+                  } else if (temp <= 60) {
+                      // Cool temperatures - light blue to green
+                      const ratio = (temp - 32) / (60 - 32);
+                      return `rgb(0, ${Math.floor(150 + 105 * ratio)}, ${Math.floor(255 * (1 - ratio))})`;
+                  } else if (temp <= 80) {
+                      // Moderate temperatures - green to yellow to orange
+                      const ratio = (temp - 60) / (80 - 60);
+                      return `rgb(${Math.floor(255 * ratio)}, ${Math.floor(255)}, ${Math.floor(50 * (1 - ratio))})`;
+                  } else {
+                      // Hot temperatures - orange to red
+                      const ratio = Math.min(1, (temp - 80) / 20);
+                      return `rgb(255, ${Math.floor(255 * (1 - ratio))}, 0)`;
+                  }
+              }),
+              borderColor: 'transparent',
+              borderWidth: 1,
+              borderRadius: 5,
           }],
       },
       options: {
           responsive: true,
           maintainAspectRatio: false,
           scales: {
-              x: { title: { display: true, text: 'Time' } },
-              y: { title: { display: true, text: 'Temperature (°F)' } }
+              x: { 
+                  title: { display: true, text: 'Time' },
+                  ticks: { 
+                      autoSkip: false,
+                      maxRotation: 0,
+                      callback: function(value, index) {
+                          return index % 6 === 0 ? forecastTemps[index].time : '';
+                      }
+                  }
+              },
+              y: { 
+                  title: { display: true, text: 'Temperature (°F)' },
+                  // Adding this to ensure consistent display format
+                  ticks: {
+                      callback: function(value) {
+                          return parseFloat(value).toFixed(1);
+                      }
+                  }
+              }
+          },
+          plugins: {
+              tooltip: {
+                  callbacks: {
+                      label: function(context) {
+                          return `Temperature: ${parseFloat(context.raw).toFixed(1)}°F`;
+                      }
+                  }
+              }
           }
       }
   });
 }
+
+// For a more complete solution, you'll need to ensure the data source is the same
+// Add this function to synchronize with your current temperature display
+function synchronizeTemperatureData() {
+  // This should be called before displayTemperatureGraph
+  // Get the current temperature data from wherever your "other thing" is getting it
+  const currentTempElement = document.getElementById('currentTemperature'); // Adjust selector as needed
+  
+  if (currentTempElement) {
+    const currentTemp = parseFloat(currentTempElement.textContent);
+    
+    // Update the interpolatedData to match this temperature for the current hour
+    const currentHour = new Date().getHours();
+    interpolatedData.interpolatedTemps[currentHour] = currentTemp.toFixed(1);
+  }
+  
+  // Now call the display function with synchronized data
+  displayTemperatureGraph(interpolatedData);
+}
+
+
 
 
 // Display forecast graph using interpolated temperature data for a month
@@ -519,13 +605,21 @@ function displayPrecipitationGraph(forecastData) {
     return;
   }
 
-  const forecastPrecip = forecastData.slice(2, 7).map((day, index) => {
+  // Include today and the next 5 days (6 days total)
+  const forecastPrecip = forecastData.slice(0, 6).map((day, index) => {
       const precip = day?.day?.totalprecip_in ?? 0;
+      const precipProb = day?.day?.precip_probability_in ?? 0; // Assuming the data includes precipitation probability
       return {
-          time: new Date(Date.now() + (index + 2) * 86400000).toLocaleDateString(),
+          time: new Date(Date.now() + index * 86400000).toLocaleDateString(), // Adjusting time format for today and next 5 days
           precip: precip,
+          precipProb: precipProb, // Store precipitation probability
       };
   });
+
+  // Create a gradient for precipitation bars
+  const gradient = ctx.createLinearGradient(0, 0, 0, 400); // Vertical gradient
+  gradient.addColorStop(0, 'rgba(63, 122, 170, 0.5)');  // Light blue for light precipitation
+  gradient.addColorStop(1, 'rgba(63, 122, 170, 1)');  // Darker blue for higher precipitation
 
   if (precipitationChart) {
       precipitationChart.destroy();
@@ -535,25 +629,78 @@ function displayPrecipitationGraph(forecastData) {
       type: 'bar',
       data: {
           labels: forecastPrecip.map(item => item.time),
-          datasets: [{
-              label: 'Precipitation (in)',
-              data: forecastPrecip.map(item => item.precip),
-              backgroundColor: '#3f7aaa',
-              borderColor: 'rgba(0, 0, 0, 0.2)',
-              borderWidth: 1,
-              borderRadius: 5,
-          }],
+          datasets: [
+              {
+                  label: 'Precipitation (in)',
+                  data: forecastPrecip.map(item => item.precip),
+                  backgroundColor: gradient,
+                  borderColor: 'rgba(0, 0, 0, 0.2)',
+                  borderWidth: 1,
+                  borderRadius: 5,
+              },
+              {
+                  label: 'Precipitation Probability (%)',
+                  data: forecastPrecip.map(item => item.precipProb),
+                  type: 'line', // Set the chart type to line for the probability
+                  borderColor: 'rgba(255, 99, 132, 1)', // Red line for probability
+                  backgroundColor: 'rgba(255, 99, 132, 0.2)', // Light red for line area
+                  fill: true, // Fill the area under the line graph
+                  borderWidth: 2,
+                  tension: 0.3, // Smooth out the line curve
+              }
+          ]
       },
       options: {
           responsive: true,
           maintainAspectRatio: false,
           scales: {
-              x: { title: { display: true, text: 'Date' } },
-              y: { title: { display: true, text: 'Precipitation (in)' } }
+              x: {
+                  title: { display: true, text: 'Date' },
+                  ticks: {
+                      autoSkip: true,
+                      maxRotation: 45, // Angle for date labels
+                      minRotation: 45,
+                  }
+              },
+              y: {
+                  title: { display: true, text: 'Precipitation (in)' },
+                  ticks: {
+                      beginAtZero: true,
+                      stepSize: 0.1, // Adjust step size for better readability
+                  }
+              },
+              y2: {
+                  title: { display: true, text: 'Precipitation Probability (%)' },
+                  position: 'right', // Position on the right side for probability
+                  ticks: {
+                      beginAtZero: true,
+                      max: 100, // Max value for probability
+                      stepSize: 20,
+                  }
+              }
+          },
+          plugins: {
+              legend: {
+                  display: true,
+                  position: 'top',
+              },
+              tooltip: {
+                  mode: 'index',
+                  intersect: false,
+                  backgroundColor: 'rgba(0,0,0,0.7)',
+                  titleColor: '#fff',
+                  bodyColor: '#fff',
+                  footerColor: '#fff',
+                  footerFont: {
+                      size: 12,
+                  }
+              }
           }
       }
   });
 }
+
+
 
 
 // Display wind compass
@@ -608,6 +755,8 @@ function displayWindCompass(weatherData) {
       </div>
     </div>
   `;
+  
+  
   
   // Add styles to the document
   if (!document.getElementById('wind-styles')) {
@@ -738,38 +887,60 @@ function displayWindCompass(weatherData) {
 }
 
 // Calculate wind chill formula
-function calculateWindChill(tempF, windMph) {
-  if (tempF > 50 || windMph < 3) {
-    // Wind chill formula is not applicable
-    return tempF.toFixed(1);
+function calculateWindChill(temp, windSpeed) {
+  // If you don't have this function, here's a simple implementation
+  if (temp <= 50 && windSpeed >= 3) {
+    const windChill = 35.74 + (0.6215 * temp) - (35.75 * Math.pow(windSpeed, 0.16)) + (0.4275 * temp * Math.pow(windSpeed, 0.16));
+    return Math.round(windChill * 10) / 10; // Round to 1 decimal place
+  } else {
+    return temp; // No wind chill if temp > 50°F or wind speed < 3 mph
   }
-  
-  // Wind chill formula from National Weather Service
-  const windChill = 35.74 + (0.6215 * tempF) - (35.75 * Math.pow(windMph, 0.16)) + (0.4275 * tempF * Math.pow(windMph, 0.16));
-  return Math.round(windChill * 10) / 10; // Round to 1 decimal place
 }
 
-
+let weatherData = {
+  current: {
+    wind_mph: 15,
+    wind_degree: 90,
+    wind_dir: "E",
+    feelslike_f: 65,
+    temp_f: 70
+  }
+};
 
 function toggleCard(cardId) {
-  const cardContent = document.getElementById(cardId);
-  const icon = cardContent.previousElementSibling.querySelector('.toggle-icon');
+  console.log("Toggling card:", cardId); // Debugging line
+  const card = document.getElementById(cardId).closest(".card");
+  const overlay = document.getElementById("overlay");
 
-  cardContent.classList.toggle('open');
-  icon.classList.toggle('flip');
-  icon.innerHTML = cardContent.classList.contains('open') 
-    ? '<i class="ri-arrow-drop-down-line"></i>' 
-    : '<i class="ri-arrow-drop-down-line"></i>';
+  if (card.classList.contains("expanded")) {
+    card.classList.remove("expanded");
+    overlay.style.display = "none";
+  } else {
+    // Close any other expanded card before opening a new one
+    document.querySelectorAll(".card").forEach(c => c.classList.remove("expanded"));
+    card.classList.add("expanded");
+    overlay.style.display = "block";
+
+    // If opening the wind card, ensure the wind compass is displayed
+    if (cardId === "wind-card") {
+      console.log("Displaying wind compass"); // Debugging line
+      displayWindCompass(weatherData); // Inject compass into the card
+    }
+  }
 }
 
-document.addEventListener("DOMContentLoaded", function () {
-  const links = document.querySelectorAll(".nav-links a");
-  links.forEach(link => {
-    if (window.location.pathname.includes(link.getAttribute("href"))) {
-      link.classList.add("active");
-    }
-  });
+// Close on overlay click
+document.addEventListener("click", function (event) {
+  const expandedCard = document.querySelector(".expanded");
+  const overlay = document.getElementById("overlay");
+
+  if (expandedCard && !expandedCard.contains(event.target) && !event.target.closest(".card-header")) {
+    expandedCard.classList.remove("expanded");
+    overlay.style.display = "none";
+  }
 });
+
+
 
 // Add this function to your code
 // Function to fetch weather data

@@ -124,63 +124,48 @@
   <!-- Temperature Card -->
   <div class="card">
     <div class="card-header" onclick="toggleCard('temperature-card')">
-      <h5 class="temperature"><i class="ri-temp-hot-line"></i>Temperature</h5>
-      
-
-      <span class="toggle-icon"><i class="ri-arrow-drop-down-line"></i></span>
+      <h5><i class="ri-temp-hot-line"></i> Temperature</h5>
     </div>
     <div class="card-content" id="temperature-card">
-      <div class="chart-container">
-        <canvas id="temperatureChart" width="922" height="500"></canvas>
-      </div>
+      <canvas id="temperatureChart"></canvas>
     </div>
   </div>
 
   <!-- Precipitation Card -->
   <div class="card">
     <div class="card-header" onclick="toggleCard('precipitation-card')">
-      <h5 class="precipitation"><i class="ri-rainy-fill"></i>Precipitation</h5>
-
-
-      <span class="toggle-icon"><i class="ri-arrow-drop-down-line"></i></span>
+      <h5><i class="ri-rainy-fill"></i> Precipitation</h5>
     </div>
     <div class="card-content" id="precipitation-card">
-      <p>Precipitation data will go here.</p>
-      <div class="chart-container">
-        <canvas id="precipitationChart" width="922" height="500"></canvas>
-      </div>
+      <canvas id="precipitationChart"></canvas>
     </div>
   </div>
 
   <!-- Forecast Card -->
   <div class="card">
     <div class="card-header" onclick="toggleCard('forecast-card')">
-      <h5 class="forecast"><i class="ri-calendar-2-line"></i>Forecast</h5>
-
-
-      <span class="toggle-icon"><i class="ri-arrow-drop-down-line"></i></span>
+      <h5><i class="ri-calendar-2-line"></i> Forecast</h5>
     </div>
     <div class="card-content" id="forecast-card">
-      <div class="chart-container">
-        <canvas id="forecastChart" width="922" height="500"></canvas>
-      </div>
+      <canvas id="forecastChart"></canvas>
     </div>
   </div>
 
-    <!-- Wind Card -->
-    <div class="card">
-      <div class="card-header" onclick="toggleCard('wind-card')">
-        <h5 class="wind"><i class="ri-windy-line"></i>Wind</h5>
-  
-  
-        <span class="toggle-icon"><i class="ri-arrow-drop-down-line"></i></span>
-      </div>
-      <div class="card-content" id="wind-card">
-        <canvas id="wind-card" width="922" height="500"></canvas>
-      </div>
+  <!-- Wind Card -->
+  <div class="card">
+    <div class="card-header" onclick="toggleCard('wind-card')">
+      <h5><i class="ri-windy-line"></i> Wind</h5>
     </div>
+    <div class="card-content" id="wind-card">
+      <canvas id="windChart"></canvas>
+    </div>
+  </div>
 </div>
 
+<!-- Background Overlay -->
+<div id="overlay" class="overlay"></div>
+
+  
   <script src="/script.js"></script>
 </body>
 </html>

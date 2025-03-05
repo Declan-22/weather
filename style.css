@@ -706,6 +706,38 @@ body.dark-theme {
   transform: rotate(180deg);
 }
 
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+  display: none;
+}
+
+.expanded {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: 90vw;
+  height: 80vh;
+  max-width: 800px;
+  background: white;
+  z-index: 1000;
+  transform: translate(-50%, -50%);
+  box-shadow: 5px 5px 20px rgba(0, 0, 0, 0.2);
+  padding: 20px;
+  border-radius: 12px;
+  transition: all 0.3s ease-in-out;
+}
+
+.expanded .card-content {
+  display: block;
+  opacity: 1;
+}
+
 
 
 
